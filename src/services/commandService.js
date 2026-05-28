@@ -1,7 +1,8 @@
-const { PermissionsBitField } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { isAutoSendEnabled, setAutoSendEnabled } = require('../storage/recruitmentStore');
 
 const COMMAND_PREFIX = '!\uc678\ucd9c\uc81c';
+const HELP_COMMAND = '!\uba85\ub839\uc5b4';
 const MESSAGE_ADMIN_ONLY =
   '\uad00\ub9ac\uc790 \uad8c\ud55c\uc774 \uc788\ub294 \uc0ac\uc6a9\uc790\ub9cc \uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1\uc744 \uc870\ud68c\ud558\uac70\ub098 \ubcc0\uacbd\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.';
 const MESSAGE_USAGE = '\uc0ac\uc6a9\ubc95: `!\uc678\ucd9c\uc81c`, `!\uc678\ucd9c\uc81c on`, `!\uc678\ucd9c\uc81c off`';
@@ -33,7 +34,35 @@ async function reply(message, content) {
   });
 }
 
+async function replyWithEmbed(message, embed) {
+  await message.reply({
+    embeds: [embed],
+    allowedMentions: {
+      repliedUser: false,
+    },
+  });
+}
+
+function createCommandHelpEmbed() {
+  return new EmbedBuilder()
+    .setColor(0x2f80ed)
+    .setTitle('\uba85\ub839\uc5b4 \uc548\ub0b4')
+    .setDescription(
+      [
+        '``!\uba85\ub839\uc5b4`` - \uad6c\ud604\ub41c \uba85\ub839\uc5b4\uc640 \uc124\uba85\uc744 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.',
+        '``!\uc678\ucd9c\uc81c`` - \uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1 \ud604\uc7ac \uc0c1\ud0dc\ub97c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4. (\uad00\ub9ac\uc790 \uc804\uc6a9.)',
+        '``!\uc678\ucd9c\uc81c on`` - \uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1\uc744 \ucf2d\ub2c8\ub2e4. (\uad00\ub9ac\uc790 \uc804\uc6a9.)',
+        '``!\uc678\ucd9c\uc81c off`` - \uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1\uc744 \ub044\ub2c8\ub2e4. (\uad00\ub9ac\uc790 \uc804\uc6a9.)',
+      ].join('\n'),
+    );
+}
+
 async function handleRecruitmentCommand(message) {
+  if (message.content.trim() === HELP_COMMAND) {
+    await replyWithEmbed(message, createCommandHelpEmbed());
+    return true;
+  }
+
   const action = parseRecruitmentCommand(message.content);
 
   if (action === null) {
