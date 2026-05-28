@@ -10,7 +10,7 @@ const client = new Client({
   intents: discordConfig.intents,
 });
 
-client.once('clientReady', (readyClient) => {
+client.once('clientReady', (ready) => {
   console.log(`Discord bot logged in as ${readyClient.user.tag}`);
 
   try {
