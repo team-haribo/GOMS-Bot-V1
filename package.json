@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "check": "node --check src/index.js && node --check src/config/discord.js && node --check src/cron/recruitmentCron.js && node --check src/embeds/recruitmentEmbed.js && node --check src/embeds/resultEmbed.js && node --check src/services/discordService.js && node --check src/services/gomsApiService.js && node --check src/services/recruitmentService.js && node --check src/storage/recruitmentStore.js && node --check src/utils/dateUtil.js",
+    "check": "node --check src/index.js && node --check src/config/discord.js && node --check src/cron/recruitmentCron.js && node --check src/embeds/recruitmentEmbed.js && node --check src/embeds/resultEmbed.js && node --check src/services/commandService.js && node --check src/services/discordService.js && node --check src/services/gomsApiService.js && node --check src/services/recruitmentService.js && node --check src/storage/recruitmentStore.js && node --check src/utils/dateUtil.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

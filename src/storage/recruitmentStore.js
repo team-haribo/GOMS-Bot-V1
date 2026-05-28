@@ -1,8 +1,19 @@
-// TODO: Add recruitment persistence logic.
-function getRecruitmentState() {
-  return null;
+const recruitmentState = {
+  autoSendEnabled: true,
+};
+
+// TODO: Replace in-memory state with persistent storage if runtime restarts must preserve settings.
+function isAutoSendEnabled() {
+  return recruitmentState.autoSendEnabled;
+}
+
+function setAutoSendEnabled(enabled) {
+  recruitmentState.autoSendEnabled = Boolean(enabled);
+
+  return recruitmentState.autoSendEnabled;
 }
 
 module.exports = {
-  getRecruitmentState,
+  isAutoSendEnabled,
+  setAutoSendEnabled,
 };
