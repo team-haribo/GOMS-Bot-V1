@@ -9,8 +9,7 @@ function createRecruitmentEmbed() {
   return new EmbedBuilder()
     .setColor(0x2f80ed)
     .setTitle(RECRUITMENT_TITLE)
-    .setDescription(RECRUITMENT_DESCRIPTION)
-    .setTimestamp();
+    .setDescription(RECRUITMENT_DESCRIPTION);
 }
 
 module.exports = {

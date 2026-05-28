@@ -1,5 +1,8 @@
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
-const { isAutoSendEnabled, setAutoSendEnabled } = require('../storage/recruitmentStore');
+const {
+  isAutoSendEnabled,
+  setAutoSendEnabled,
+} = require('../storage/recruitmentStore');
 
 const COMMAND_PREFIX = '!\uc678\ucd9c\uc81c';
 const HELP_COMMAND = '!\uba85\ub839\uc5b4';
@@ -83,14 +86,14 @@ async function handleRecruitmentCommand(message) {
 
   if (action === 'on') {
     setAutoSendEnabled(true);
-    console.log('[command] Recruitment auto-send enabled.');
+    console.log('[COMMAND] Recruitment auto-send enabled.');
     await reply(message, `\uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1 \ud604\uc7ac \uc0c1\ud0dc: ${getStatusText()}`);
     return true;
   }
 
   if (action === 'off') {
     setAutoSendEnabled(false);
-    console.log('[command] Recruitment auto-send disabled.');
+    console.log('[COMMAND] Recruitment auto-send disabled.');
     await reply(message, `\uc678\ucd9c\uc81c \ubaa8\uc9d1 \uc790\ub3d9 \ubc1c\uc1a1 \ud604\uc7ac \uc0c1\ud0dc: ${getStatusText()}`);
     return true;
   }

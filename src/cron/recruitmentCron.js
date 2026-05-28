@@ -16,15 +16,15 @@ function createRecruitmentCronJob(client, label, expression) {
     expression,
     async () => {
       if (!isAutoSendEnabled()) {
-        console.log(`[recruitment-cron] ${label} send skipped because auto-send is disabled.`);
+        console.log(`[CRON] ${label} send skipped because auto-send is disabled.`);
         return;
       }
 
       try {
         const message = await sendRecruitmentMessage(client);
-        console.log(`[recruitment-cron] ${label} recruitment message sent: ${message.id}`);
+        console.log(`[CRON] ${label} recruitment message sent: ${message.id}`);
       } catch (error) {
-        console.error(`[recruitment-cron] Failed to send ${label} recruitment message:`, error);
+        console.error(`[CRON] Failed to send ${label} recruitment message:`, error);
       }
     },
     {
@@ -39,9 +39,9 @@ function createRecruitmentCollectionCronJob(client, label, expression) {
     async () => {
       try {
         await collectRecruitmentParticipants(client);
-        console.log(`[recruitment-cron] ${label} participant collection completed.`);
+        console.log(`[CRON] ${label} participant collection completed.`);
       } catch (error) {
-        console.error(`[recruitment-cron] Failed to collect ${label} recruitment participants:`, error);
+        console.error(`[CRON] Failed to collect ${label} recruitment participants:`, error);
       }
     },
     {
@@ -63,10 +63,10 @@ function startRecruitmentCron(client) {
     createRecruitmentCollectionCronJob(client, 'wednesday', wednesdayCollectCron),
   ];
 
-  console.log(`[recruitment-cron] Registered monday schedule: ${mondayCron} (${TIMEZONE})`);
-  console.log(`[recruitment-cron] Registered wednesday schedule: ${wednesdayCron} (${TIMEZONE})`);
-  console.log(`[recruitment-cron] Registered monday collection schedule: ${mondayCollectCron} (${TIMEZONE})`);
-  console.log(`[recruitment-cron] Registered wednesday collection schedule: ${wednesdayCollectCron} (${TIMEZONE})`);
+  console.log(`[CRON] Registered monday schedule: ${mondayCron} (${TIMEZONE})`);
+  console.log(`[CRON] Registered wednesday schedule: ${wednesdayCron} (${TIMEZONE})`);
+  console.log(`[CRON] Registered monday collection schedule: ${mondayCollectCron} (${TIMEZONE})`);
+  console.log(`[CRON] Registered wednesday collection schedule: ${wednesdayCollectCron} (${TIMEZONE})`);
 
   return jobs;
 }
