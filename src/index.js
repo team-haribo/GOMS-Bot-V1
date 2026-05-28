@@ -11,7 +11,6 @@ const client = new Client({
 });
 
 client.once('clientReady', (ready) => {
-  console.log(`Discord bot logged in as ${ready.user.tag}`);
 
   try {
     startRecruitmentCron(readyClient);
