@@ -37,6 +37,11 @@ function createRecruitmentCollectionCronJob(client, label, expression) {
   return cron.schedule(
     expression,
     async () => {
+      if (!isAutoSendEnabled()) {
+        console.log('[CRON] 외출제 자동 발송이 비활성화되어 참여자 수집 및 석식 안내를 건너뜁니다.');
+        return;
+      }
+
       try {
         await collectRecruitmentParticipants(client);
         console.log(`[CRON] ${label} participant collection completed.`);
