@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 
-const EMPTY_VALUE = '없음';
-const RESULT_TITLE = '🐻 GOMS 동기화 결과';
+const EMPTY_VALUE = '\uc5c6\uc74c';
+const RESULT_TITLE = '\uD83D\uDC3B GOMS \ub3d9\uae30\ud654 \uacb0\uacfc';
 const MULTILINE_LIST_THRESHOLD = 3;
 
 function formatSeoulDate(date = new Date()) {
@@ -17,7 +17,7 @@ function formatSeoulDate(date = new Date()) {
     return result;
   }, {});
 
-  return `${values.year}년 ${values.month}월 ${values.day}일`;
+  return `${values.year}\ub144 ${values.month}\uc6d4 ${values.day}\uc77c`;
 }
 
 function formatAppliedAt(appliedAt) {
@@ -68,26 +68,26 @@ function createResultEmbed(result) {
     .setTitle(RESULT_TITLE)
     .addFields(
       {
-        name: '✅ 동기화 성공',
-        value: `${syncedCount}명`,
+        name: '\u2705 \ub3d9\uae30\ud654 \uc131\uacf5',
+        value: `${syncedCount}\uba85`,
         inline: true,
       },
       {
-        name: '✅ 동기화 성공한 학생',
+        name: '\u2705 \ub3d9\uae30\ud654 \uc131\uacf5\ud55c \ud559\uc0dd',
         value: formatUserList(result?.syncedUsers),
       },
       {
-        name: '❌ 동기화 실패',
-        value: `${failedCount}명`,
+        name: '\u274C \ub3d9\uae30\ud654 \uc2e4\ud328',
+        value: `${failedCount}\uba85`,
         inline: true,
       },
       {
-        name: '❌ 동기화 실패한 학생',
+        name: '\u274C \ub3d9\uae30\ud654 \uc2e4\ud328\ud55c \ud559\uc0dd',
         value: formatUserList(result?.failedUsers),
       },
     )
     .setFooter({
-      text: `적용일: ${formatAppliedAt(result?.appliedAt)}`,
+      text: `\uc801\uc6a9\uc77c: ${formatAppliedAt(result?.appliedAt)}`,
     });
 }
 
@@ -95,21 +95,21 @@ function createEmptyResultEmbed() {
   return new EmbedBuilder()
     .setColor(0x2f80ed)
     .setTitle(RESULT_TITLE)
-    .setDescription('수집된 Discord ID가 없어 GOMS 동기화 API를 호출하지 않았습니다.')
+    .setDescription('\uc218\uc9d1\ub41c Discord ID\uac00 \uc5c6\uc5b4 GOMS \ub3d9\uae30\ud654 API\ub97c \ud638\ucd9c\ud558\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.')
     .setFooter({
-      text: `적용일: ${formatAppliedAt()}`,
+      text: `\uc801\uc6a9\uc77c: ${formatAppliedAt()}`,
     });
 }
 
 function createErrorResultEmbed(error) {
-  const status = error?.response?.status || '없음';
+  const status = error?.response?.status || EMPTY_VALUE;
   const responseData = error?.response?.data;
   const responseMessage = typeof responseData === 'string' ? responseData : responseData?.message;
-  const message = responseMessage || error?.message || '알 수 없는 오류가 발생했습니다.';
+  const message = responseMessage || error?.message || '\uc54c \uc218 \uc5c6\ub294 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.';
 
   return new EmbedBuilder()
     .setColor(0xeb5757)
-    .setTitle('🐻 GOMS 동기화 오류')
+    .setTitle('\uD83D\uDC3B GOMS \ub3d9\uae30\ud654 \uc624\ub958')
     .addFields(
       {
         name: 'status',

@@ -37,7 +37,7 @@ async function sendResultEmbed(channel, embed) {
 function createDinnerNotificationContent(discordUserIds) {
   const mentions = discordUserIds.map((id) => `<@${id}>`).join(' ');
 
-  return `${mentions}\n밥 ㄱㄱ`;
+  return `${mentions}\n\ubc25 \u3131\u3131`;
 }
 
 async function sendDinnerNotification(channel, discordUserIds) {

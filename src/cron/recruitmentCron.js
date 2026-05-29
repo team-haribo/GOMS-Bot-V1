@@ -38,7 +38,7 @@ function createRecruitmentCollectionCronJob(client, label, expression) {
     expression,
     async () => {
       if (!isAutoSendEnabled()) {
-        console.log('[CRON] 외출제 자동 발송이 비활성화되어 참여자 수집 및 석식 안내를 건너뜁니다.');
+        console.log('[CRON] \uc678\ucd9c\uc81c \uc790\ub3d9 \ubc1c\uc1a1\uc774 \ube44\ud65c\uc131\ud654\ub418\uc5b4 \ucc38\uc5ec\uc790 \uc218\uc9d1 \ubc0f \uc11d\uc2dd \uc548\ub0b4\ub97c \uac74\ub108\ub701\ub2c8\ub2e4.');
         return;
       }
 
