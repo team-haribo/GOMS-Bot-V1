@@ -39,7 +39,7 @@ async function sendRecruitmentParticipants(discordUserIds) {
       },
     );
 
-    console.log('[GOMS_API] Recruitment participants API response:', response.data);
+    console.log('[GOMS_API] \uc678\ucd9c\uc81c \uad00\ub9ac \uc778\uc6d0 \ub3d9\uae30\ud654 \uc644\ub8cc:', response.data);
 
     return response.data;
   } catch (error) {

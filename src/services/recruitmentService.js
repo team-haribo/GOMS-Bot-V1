@@ -1,10 +1,6 @@
 const discordConfig = require('../config/discord');
 const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
-const {
-  createEmptyResultEmbed,
-  createErrorResultEmbed,
-  createResultEmbed,
-} = require('../embeds/resultEmbed');
+const { createErrorResultEmbed } = require('../embeds/resultEmbed');
 const { sendRecruitmentParticipants } = require('./gomsApiService');
 const {
   getCurrentRecruitmentMessageId,
@@ -53,7 +49,7 @@ async function sendDinnerNotification(channel, discordUserIds) {
     },
   });
 
-  console.log(`[RECRUITMENT] Dinner notification sent to ${discordUserIds.length} participants.`);
+  console.log(`[RECRUITMENT] \uc11d\uc2dd \uc548\ub0b4 \uba54\uc2dc\uc9c0 \uc804\uc1a1 \uc644\ub8cc: ${discordUserIds.length} participants`);
 }
 
 // TODO: Add duplicate-send prevention before wiring this into cron.
@@ -143,7 +139,6 @@ async function collectRecruitmentParticipants(client) {
 
   if (!message) {
     console.log('[RECRUITMENT] Participant collection skipped because no recruitment message was found.');
-    await sendResultEmbed(channel, createEmptyResultEmbed());
     return saveParticipants(createEmptyParticipantsResult());
   }
 
@@ -153,7 +148,6 @@ async function collectRecruitmentParticipants(client) {
 
   if (!reaction) {
     console.log('[RECRUITMENT] Participant collection skipped because the participation reaction was not found.');
-    await sendResultEmbed(channel, createEmptyResultEmbed());
     return saveParticipants(createEmptyParticipantsResult());
   }
 
@@ -173,14 +167,12 @@ async function collectRecruitmentParticipants(client) {
 
   if (!ids.length) {
     console.log('[RECRUITMENT] GOMS API request skipped because there are no participant Discord IDs.');
-    await sendResultEmbed(channel, createEmptyResultEmbed());
     return result;
   }
 
   try {
-    const gomsResult = await sendRecruitmentParticipants(ids);
-    await sendResultEmbed(channel, createResultEmbed(gomsResult));
-    console.log('[RECRUITMENT] GOMS sync result embed sent.');
+    await sendRecruitmentParticipants(ids);
+    console.log('[RECRUITMENT] GOMS sync completed.');
   } catch (error) {
     await sendResultEmbed(channel, createErrorResultEmbed(error));
     console.error('[RECRUITMENT] GOMS sync failed. Error embed sent.');
