@@ -34,6 +34,28 @@ async function sendResultEmbed(channel, embed) {
   });
 }
 
+function createDinnerNotificationContent(discordUserIds) {
+  const mentions = discordUserIds.map((id) => `<@${id}>`).join(' ');
+
+  return `${mentions}\n밥 ㄱㄱ`;
+}
+
+async function sendDinnerNotification(channel, discordUserIds) {
+  if (!discordUserIds.length) {
+    console.log('[RECRUITMENT] Dinner notification skipped because there are no participants.');
+    return;
+  }
+
+  await channel.send({
+    content: createDinnerNotificationContent(discordUserIds),
+    allowedMentions: {
+      users: discordUserIds,
+    },
+  });
+
+  console.log(`[RECRUITMENT] Dinner notification sent to ${discordUserIds.length} participants.`);
+}
+
 // TODO: Add duplicate-send prevention before wiring this into cron.
 async function sendRecruitmentMessage(client) {
   if (!discordConfig.recruitmentChannelId) {
@@ -136,7 +158,7 @@ async function collectRecruitmentParticipants(client) {
   }
 
   const users = await reaction.users.fetch();
-  const participants = users.filter((user) => user.id !== client.user.id);
+  const participants = users.filter((user) => !user.bot);
   const ids = participants.map((user) => user.id);
   const usernames = participants.map((user) => user.username);
 
@@ -162,6 +184,13 @@ async function collectRecruitmentParticipants(client) {
   } catch (error) {
     await sendResultEmbed(channel, createErrorResultEmbed(error));
     console.error('[RECRUITMENT] GOMS sync failed. Error embed sent.');
+    throw error;
+  }
+
+  try {
+    await sendDinnerNotification(channel, ids);
+  } catch (error) {
+    console.error('[RECRUITMENT] Failed to send dinner notification:', error);
     throw error;
   }
 
