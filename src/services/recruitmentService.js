@@ -1,12 +1,18 @@
 const discordConfig = require('../config/discord');
 const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
 const {
+  createEmptyResultEmbed,
+  createErrorResultEmbed,
+  createResultEmbed,
+} = require('../embeds/resultEmbed');
+const { sendRecruitmentParticipants } = require('./gomsApiService');
+const {
   getCurrentRecruitmentMessageId,
   setCurrentRecruitmentMessageId,
   setParticipants,
 } = require('../storage/recruitmentStore');
 
-const PARTICIPATION_REACTION_EMOJI = '\u{1F64B}';
+const PARTICIPATION_REACTION_EMOJI = discordConfig.reactionEmoji || '\u{1F64B}';
 const UNKNOWN_MESSAGE_ERROR_CODE = 10008;
 
 function createEmptyParticipantsResult() {
@@ -20,6 +26,12 @@ function saveParticipants(result) {
   setParticipants(result);
 
   return result;
+}
+
+async function sendResultEmbed(channel, embed) {
+  await channel.send({
+    embeds: [embed],
+  });
 }
 
 // TODO: Add duplicate-send prevention before wiring this into cron.
@@ -49,7 +61,7 @@ async function sendRecruitmentMessage(client) {
 }
 
 async function findLatestRecruitmentMessageFromHistory(client, channel) {
-  console.log('[recruitment] No current recruitment message ID in memory. Searching channel history...');
+  console.log('[RECRUITMENT] No current recruitment message ID in memory. Searching channel history...');
 
   try {
     const messages = await channel.messages.fetch({ limit: 50 });
@@ -63,12 +75,12 @@ async function findLatestRecruitmentMessageFromHistory(client, channel) {
 
     if (message) {
       setCurrentRecruitmentMessageId(message.id);
-      console.log(`[recruitment] Found latest recruitment message from history: ${message.id}`);
+      console.log(`[RECRUITMENT] Found latest recruitment message from history: ${message.id}`);
     }
 
     return message || null;
   } catch (error) {
-    console.error('[recruitment] Failed to fetch channel history for fallback:', error);
+    console.error('[RECRUITMENT] Failed to fetch channel history for fallback:', error);
     return null;
   }
 }
@@ -84,7 +96,7 @@ async function fetchRecruitmentMessage(client, channel) {
     return await channel.messages.fetch(messageId);
   } catch (error) {
     if (error.code === UNKNOWN_MESSAGE_ERROR_CODE) {
-      console.warn(`[recruitment] Message with ID ${messageId} was not found. Searching channel history...`);
+      console.warn(`[RECRUITMENT] Message with ID ${messageId} was not found. Searching channel history...`);
       setCurrentRecruitmentMessageId(null);
 
       return findLatestRecruitmentMessageFromHistory(client, channel);
@@ -108,7 +120,8 @@ async function collectRecruitmentParticipants(client) {
   const message = await fetchRecruitmentMessage(client, channel);
 
   if (!message) {
-    console.log('[recruitment] Participant collection skipped because no recruitment message was found.');
+    console.log('[RECRUITMENT] Participant collection skipped because no recruitment message was found.');
+    await sendResultEmbed(channel, createEmptyResultEmbed());
     return saveParticipants(createEmptyParticipantsResult());
   }
 
@@ -117,7 +130,8 @@ async function collectRecruitmentParticipants(client) {
   );
 
   if (!reaction) {
-    console.log('[recruitment] Participant collection skipped because the participation reaction was not found.');
+    console.log('[RECRUITMENT] Participant collection skipped because the participation reaction was not found.');
+    await sendResultEmbed(channel, createEmptyResultEmbed());
     return saveParticipants(createEmptyParticipantsResult());
   }
 
@@ -126,14 +140,32 @@ async function collectRecruitmentParticipants(client) {
   const ids = participants.map((user) => user.id);
   const usernames = participants.map((user) => user.username);
 
-  console.log(`[recruitment] Participant count: ${participants.size}`);
-  console.log(`[recruitment] Participant Discord IDs: ${ids.join(', ') || '(none)'}`);
-  console.log(`[recruitment] Participant usernames: ${usernames.join(', ') || '(none)'}`);
+  console.log(`[RECRUITMENT] Participant count: ${participants.size}`);
+  console.log(`[RECRUITMENT] Participant Discord IDs: ${ids.join(', ') || '(none)'}`);
+  console.log(`[RECRUITMENT] Participant usernames: ${usernames.join(', ') || '(none)'}`);
 
-  return saveParticipants({
+  const result = saveParticipants({
     ids,
     usernames,
   });
+
+  if (!ids.length) {
+    console.log('[RECRUITMENT] GOMS API request skipped because there are no participant Discord IDs.');
+    await sendResultEmbed(channel, createEmptyResultEmbed());
+    return result;
+  }
+
+  try {
+    const gomsResult = await sendRecruitmentParticipants(ids);
+    await sendResultEmbed(channel, createResultEmbed(gomsResult));
+    console.log('[RECRUITMENT] GOMS sync result embed sent.');
+  } catch (error) {
+    await sendResultEmbed(channel, createErrorResultEmbed(error));
+    console.error('[RECRUITMENT] GOMS sync failed. Error embed sent.');
+    throw error;
+  }
+
+  return result;
 }
 
 module.exports = {

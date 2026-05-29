@@ -10,12 +10,11 @@ const client = new Client({
   intents: discordConfig.intents,
 });
 
-client.once('clientReady', (ready) => {
-
+client.once('clientReady', (readyClient) => {
   try {
     startRecruitmentCron(readyClient);
   } catch (error) {
-    console.error('Failed to register recruitment cron jobs:', error);
+    console.error('[CRON] Failed to register recruitment cron jobs:', error);
   }
 });
 
@@ -27,19 +26,19 @@ client.on('messageCreate', async (message) => {
   try {
     await handleRecruitmentCommand(message);
   } catch (error) {
-    console.error('Failed to handle message command:', error);
+    console.error('[COMMAND] Failed to handle message command:', error);
   }
 });
 
 client.on('error', (error) => {
-  console.error('Discord client error:', error);
+  console.error('[RECRUITMENT] Discord client error:', error);
 });
 
 // TODO: Register commands and application services.
 discordService.initialize(client);
 
 client.login(discordConfig.token).catch((error) => {
-  console.error('Failed to login Discord client:', error);
+  console.error('[RECRUITMENT] Failed to login Discord client:', error);
   process.exitCode = 1;
 });
 
