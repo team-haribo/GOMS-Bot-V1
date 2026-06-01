@@ -1,6 +1,9 @@
 const discordConfig = require('../config/discord');
 const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
-const { createErrorResultEmbed } = require('../embeds/resultEmbed');
+const {
+  createErrorResultEmbed,
+  createResultEmbed,
+} = require('../embeds/resultEmbed');
 const { sendRecruitmentParticipants } = require('./gomsApiService');
 const {
   getCurrentRecruitmentMessageId,
@@ -171,8 +174,9 @@ async function collectRecruitmentParticipants(client) {
   }
 
   try {
-    await sendRecruitmentParticipants(ids);
-    console.log('[RECRUITMENT] GOMS sync completed.');
+    const gomsResult = await sendRecruitmentParticipants(ids);
+    await sendResultEmbed(channel, createResultEmbed(gomsResult));
+    console.log('[RECRUITMENT] GOMS sync result embed sent.');
   } catch (error) {
     await sendResultEmbed(channel, createErrorResultEmbed(error));
     console.error('[RECRUITMENT] GOMS sync failed. Error embed sent.');
