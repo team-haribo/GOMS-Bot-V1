@@ -6,10 +6,11 @@ const {
 const { isAutoSendEnabled } = require('../storage/recruitmentStore');
 
 const TIMEZONE = 'Asia/Seoul';
-const DEFAULT_MONDAY_SEND_CRON = '30 9 * * 1';
-const DEFAULT_WEDNESDAY_SEND_CRON = '30 9 * * 3';
-const DEFAULT_MONDAY_COLLECT_CRON = '20 18 * * 1';
-const DEFAULT_WEDNESDAY_COLLECT_CRON = '20 18 * * 3';
+// TODO: Restore the production schedules after testing: send 09:30, collect 18:20.
+const DEFAULT_MONDAY_SEND_CRON = '10 20 * * 1';
+const DEFAULT_WEDNESDAY_SEND_CRON = '10 20 * * 3';
+const DEFAULT_MONDAY_COLLECT_CRON = '15 20 * * 1';
+const DEFAULT_WEDNESDAY_COLLECT_CRON = '15 20 * * 3';
 
 function createRecruitmentCronJob(client, label, expression) {
   return cron.schedule(

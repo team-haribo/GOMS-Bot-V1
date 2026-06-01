@@ -68,11 +68,7 @@ async function sendRecruitmentMessage(client) {
   }
 
   const message = await channel.send({
-    content: '@everyone',
     embeds: [createRecruitmentEmbed()],
-    allowedMentions: {
-      parse: ['everyone'],
-    },
   });
 
   await message.react(PARTICIPATION_REACTION_EMOJI);
