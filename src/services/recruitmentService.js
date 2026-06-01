@@ -1,4 +1,5 @@
 const discordConfig = require('../config/discord');
+const { createDinnerNoticeEmbed } = require('../embeds/dinnerNoticeEmbed');
 const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
 const {
   createErrorResultEmbed,
@@ -34,9 +35,7 @@ async function sendResultEmbed(channel, embed) {
 }
 
 function createDinnerNotificationContent(discordUserIds) {
-  const mentions = discordUserIds.map((id) => `<@${id}>`).join(' ');
-
-  return `${mentions}\n\ubc25 \u3131\u3131`;
+  return discordUserIds.map((id) => `<@${id}>`).join(' ');
 }
 
 async function sendDinnerNotification(channel, discordUserIds) {
@@ -47,6 +46,7 @@ async function sendDinnerNotification(channel, discordUserIds) {
 
   await channel.send({
     content: createDinnerNotificationContent(discordUserIds),
+    embeds: [createDinnerNoticeEmbed()],
     allowedMentions: {
       users: discordUserIds,
     },
