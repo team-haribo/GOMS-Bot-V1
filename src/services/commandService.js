@@ -49,7 +49,7 @@ async function replyWithEmbed(message, embed) {
 
 function createCommandHelpEmbed() {
   return new EmbedBuilder()
-    .setColor(0x2f80ed)
+    .setColor(0xffa500)
     .setTitle('\uba85\ub839\uc5b4 \uc548\ub0b4')
     .setDescription(
       [

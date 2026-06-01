@@ -7,7 +7,7 @@ const RECRUITMENT_DESCRIPTION =
 // TODO: Replace static copy with recruitment data from the GOMS API.
 function createRecruitmentEmbed() {
   return new EmbedBuilder()
-    .setColor(0x2f80ed)
+    .setColor(0xffa500)
     .setTitle(RECRUITMENT_TITLE)
     .setDescription(RECRUITMENT_DESCRIPTION);
 }
