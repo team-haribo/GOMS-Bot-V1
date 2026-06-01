@@ -8,8 +8,7 @@ function createDinnerNoticeEmbed() {
   return new EmbedBuilder()
     .setColor(0xffa500)
     .setTitle(DINNER_NOTICE_TITLE)
-    .setDescription(DINNER_NOTICE_DESCRIPTION)
-    .setTimestamp();
+    .setDescription(DINNER_NOTICE_DESCRIPTION);
 }
 
 module.exports = {

@@ -68,7 +68,11 @@ async function sendRecruitmentMessage(client) {
   }
 
   const message = await channel.send({
+    content: '@everyone',
     embeds: [createRecruitmentEmbed()],
+    allowedMentions: {
+      parse: ['everyone'],
+    },
   });
 
   await message.react(PARTICIPATION_REACTION_EMOJI);
@@ -123,7 +127,7 @@ async function fetchRecruitmentMessage(client, channel) {
   }
 }
 
-async function collectRecruitmentParticipants(client) {
+async function fetchRecruitmentParticipants(client) {
   if (!discordConfig.recruitmentChannelId) {
     throw new Error('DISCORD_RECRUITMENT_CHANNEL_ID is not configured.');
   }
@@ -137,8 +141,11 @@ async function collectRecruitmentParticipants(client) {
   const message = await fetchRecruitmentMessage(client, channel);
 
   if (!message) {
-    console.log('[RECRUITMENT] Participant collection skipped because no recruitment message was found.');
-    return saveParticipants(createEmptyParticipantsResult());
+    console.log('[RECRUITMENT] Participant fetch skipped because no recruitment message was found.');
+    return {
+      channel,
+      participants: createEmptyParticipantsResult(),
+    };
   }
 
   const reaction = message.reactions.cache.find(
@@ -146,8 +153,11 @@ async function collectRecruitmentParticipants(client) {
   );
 
   if (!reaction) {
-    console.log('[RECRUITMENT] Participant collection skipped because the participation reaction was not found.');
-    return saveParticipants(createEmptyParticipantsResult());
+    console.log('[RECRUITMENT] Participant fetch skipped because the participation reaction was not found.');
+    return {
+      channel,
+      participants: createEmptyParticipantsResult(),
+    };
   }
 
   const users = await reaction.users.fetch();
@@ -159,10 +169,25 @@ async function collectRecruitmentParticipants(client) {
   console.log(`[RECRUITMENT] Participant Discord IDs: ${ids.join(', ') || '(none)'}`);
   console.log(`[RECRUITMENT] Participant usernames: ${usernames.join(', ') || '(none)'}`);
 
-  const result = saveParticipants({
-    ids,
-    usernames,
-  });
+  return {
+    channel,
+    participants: {
+      ids,
+      usernames,
+    },
+  };
+}
+
+async function sendRecruitmentDinnerNotification(client) {
+  const { channel, participants } = await fetchRecruitmentParticipants(client);
+
+  await sendDinnerNotification(channel, participants.ids);
+}
+
+async function collectRecruitmentParticipants(client) {
+  const { channel, participants } = await fetchRecruitmentParticipants(client);
+  const result = saveParticipants(participants);
+  const { ids } = result;
 
   if (!ids.length) {
     console.log('[RECRUITMENT] GOMS API request skipped because there are no participant Discord IDs.');
@@ -179,17 +204,11 @@ async function collectRecruitmentParticipants(client) {
     throw error;
   }
 
-  try {
-    await sendDinnerNotification(channel, ids);
-  } catch (error) {
-    console.error('[RECRUITMENT] Failed to send dinner notification:', error);
-    throw error;
-  }
-
   return result;
 }
 
 module.exports = {
   collectRecruitmentParticipants,
+  sendRecruitmentDinnerNotification,
   sendRecruitmentMessage,
 };
