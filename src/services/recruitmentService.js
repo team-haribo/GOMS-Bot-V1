@@ -15,6 +15,14 @@ const {
 const PARTICIPATION_REACTION_EMOJI = discordConfig.reactionEmoji || '\u{1F64B}';
 const UNKNOWN_MESSAGE_ERROR_CODE = 10008;
 
+function isParticipationReaction(reaction) {
+  return (
+    reaction.emoji.name === PARTICIPATION_REACTION_EMOJI ||
+    reaction.emoji.id === PARTICIPATION_REACTION_EMOJI ||
+    reaction.emoji.toString() === PARTICIPATION_REACTION_EMOJI
+  );
+}
+
 function createEmptyParticipantsResult() {
   return {
     ids: [],
@@ -89,9 +97,7 @@ async function findLatestRecruitmentMessageFromHistory(client, channel) {
     const message = messages.find(
       (historyMessage) =>
         historyMessage.author.id === client.user.id &&
-        historyMessage.reactions.cache.some(
-          (reaction) => reaction.emoji.name === PARTICIPATION_REACTION_EMOJI,
-        ),
+        historyMessage.reactions.cache.some(isParticipationReaction),
     );
 
     if (message) {
@@ -148,9 +154,7 @@ async function fetchRecruitmentParticipants(client) {
     };
   }
 
-  const reaction = message.reactions.cache.find(
-    (cachedReaction) => cachedReaction.emoji.name === PARTICIPATION_REACTION_EMOJI,
-  );
+  const reaction = message.reactions.cache.find(isParticipationReaction);
 
   if (!reaction) {
     console.log('[RECRUITMENT] Participant fetch skipped because the participation reaction was not found.');
