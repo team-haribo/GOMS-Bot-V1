@@ -1,8 +1,218 @@
-// TODO: Add recruitment business logic.
-function getRecruitmentStatus() {
-  return null;
+const discordConfig = require('../config/discord');
+const { createDinnerNoticeEmbed } = require('../embeds/dinnerNoticeEmbed');
+const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
+const {
+  createErrorResultEmbed,
+  createResultEmbed,
+} = require('../embeds/resultEmbed');
+const { sendRecruitmentParticipants } = require('./gomsApiService');
+const {
+  getCurrentRecruitmentMessageId,
+  setCurrentRecruitmentMessageId,
+  setParticipants,
+} = require('../storage/recruitmentStore');
+
+const PARTICIPATION_REACTION_EMOJI = discordConfig.reactionEmoji || '\u{1F64B}';
+const UNKNOWN_MESSAGE_ERROR_CODE = 10008;
+
+function isParticipationReaction(reaction) {
+  return (
+    reaction.emoji.name === PARTICIPATION_REACTION_EMOJI ||
+    reaction.emoji.id === PARTICIPATION_REACTION_EMOJI ||
+    reaction.emoji.toString() === PARTICIPATION_REACTION_EMOJI
+  );
+}
+
+function createEmptyParticipantsResult() {
+  return {
+    ids: [],
+    usernames: [],
+  };
+}
+
+function saveParticipants(result) {
+  setParticipants(result);
+
+  return result;
+}
+
+async function sendResultEmbed(channel, embed) {
+  await channel.send({
+    embeds: [embed],
+  });
+}
+
+function createDinnerNotificationContent(discordUserIds) {
+  return discordUserIds.map((id) => `<@${id}>`).join(' ');
+}
+
+async function sendDinnerNotification(channel, discordUserIds) {
+  if (!discordUserIds.length) {
+    console.log('[RECRUITMENT] Dinner notification skipped because there are no participants.');
+    return;
+  }
+
+  await channel.send({
+    content: createDinnerNotificationContent(discordUserIds),
+    embeds: [createDinnerNoticeEmbed()],
+    allowedMentions: {
+      users: discordUserIds,
+    },
+  });
+
+  console.log(`[RECRUITMENT] \uc11d\uc2dd \uc548\ub0b4 \uba54\uc2dc\uc9c0 \uc804\uc1a1 \uc644\ub8cc: ${discordUserIds.length} participants`);
+}
+
+// TODO: Add duplicate-send prevention before wiring this into cron.
+async function sendRecruitmentMessage(client) {
+  if (!discordConfig.recruitmentChannelId) {
+    throw new Error('DISCORD_RECRUITMENT_CHANNEL_ID is not configured.');
+  }
+
+  const channel = await client.channels.fetch(discordConfig.recruitmentChannelId);
+
+  if (!channel || !channel.isTextBased()) {
+    throw new Error('Configured recruitment channel is not a text-based channel.');
+  }
+
+  const message = await channel.send({
+    content: '@everyone',
+    embeds: [createRecruitmentEmbed()],
+    allowedMentions: {
+      parse: ['everyone'],
+    },
+  });
+
+  await message.react(PARTICIPATION_REACTION_EMOJI);
+  setCurrentRecruitmentMessageId(message.id);
+
+  return message;
+}
+
+async function findLatestRecruitmentMessageFromHistory(client, channel) {
+  console.log('[RECRUITMENT] No current recruitment message ID in memory. Searching channel history...');
+
+  try {
+    const messages = await channel.messages.fetch({ limit: 50 });
+    const message = messages.find(
+      (historyMessage) =>
+        historyMessage.author.id === client.user.id &&
+        historyMessage.reactions.cache.some(isParticipationReaction),
+    );
+
+    if (message) {
+      setCurrentRecruitmentMessageId(message.id);
+      console.log(`[RECRUITMENT] Found latest recruitment message from history: ${message.id}`);
+    }
+
+    return message || null;
+  } catch (error) {
+    console.error('[RECRUITMENT] Failed to fetch channel history for fallback:', error);
+    return null;
+  }
+}
+
+async function fetchRecruitmentMessage(client, channel) {
+  const messageId = getCurrentRecruitmentMessageId();
+
+  if (!messageId) {
+    return findLatestRecruitmentMessageFromHistory(client, channel);
+  }
+
+  try {
+    return await channel.messages.fetch(messageId);
+  } catch (error) {
+    if (error.code === UNKNOWN_MESSAGE_ERROR_CODE) {
+      console.warn(`[RECRUITMENT] Message with ID ${messageId} was not found. Searching channel history...`);
+      setCurrentRecruitmentMessageId(null);
+
+      return findLatestRecruitmentMessageFromHistory(client, channel);
+    }
+
+    throw error;
+  }
+}
+
+async function fetchRecruitmentParticipants(client) {
+  if (!discordConfig.recruitmentChannelId) {
+    throw new Error('DISCORD_RECRUITMENT_CHANNEL_ID is not configured.');
+  }
+
+  const channel = await client.channels.fetch(discordConfig.recruitmentChannelId);
+
+  if (!channel || !channel.isTextBased()) {
+    throw new Error('Configured recruitment channel is not a text-based channel.');
+  }
+
+  const message = await fetchRecruitmentMessage(client, channel);
+
+  if (!message) {
+    console.log('[RECRUITMENT] Participant fetch skipped because no recruitment message was found.');
+    return {
+      channel,
+      participants: createEmptyParticipantsResult(),
+    };
+  }
+
+  const reaction = message.reactions.cache.find(isParticipationReaction);
+
+  if (!reaction) {
+    console.log('[RECRUITMENT] Participant fetch skipped because the participation reaction was not found.');
+    return {
+      channel,
+      participants: createEmptyParticipantsResult(),
+    };
+  }
+
+  const users = await reaction.users.fetch();
+  const participants = users.filter((user) => !user.bot);
+  const ids = participants.map((user) => user.id);
+  const usernames = participants.map((user) => user.username);
+
+  console.log(`[RECRUITMENT] Participant count: ${participants.size}`);
+  console.log(`[RECRUITMENT] Participant Discord IDs: ${ids.join(', ') || '(none)'}`);
+  console.log(`[RECRUITMENT] Participant usernames: ${usernames.join(', ') || '(none)'}`);
+
+  return {
+    channel,
+    participants: {
+      ids,
+      usernames,
+    },
+  };
+}
+
+async function sendRecruitmentDinnerNotification(client) {
+  const { channel, participants } = await fetchRecruitmentParticipants(client);
+
+  await sendDinnerNotification(channel, participants.ids);
+}
+
+async function collectRecruitmentParticipants(client) {
+  const { channel, participants } = await fetchRecruitmentParticipants(client);
+  const result = saveParticipants(participants);
+  const { ids } = result;
+
+  if (!ids.length) {
+    console.log('[RECRUITMENT] GOMS API request skipped because there are no participant Discord IDs.');
+    return result;
+  }
+
+  try {
+    const gomsResult = await sendRecruitmentParticipants(ids);
+    await sendResultEmbed(channel, createResultEmbed(gomsResult));
+    console.log('[RECRUITMENT] GOMS sync result embed sent.');
+  } catch (error) {
+    await sendResultEmbed(channel, createErrorResultEmbed(error));
+    console.error('[RECRUITMENT] GOMS sync failed. Error embed sent.');
+    throw error;
+  }
+
+  return result;
 }
 
 module.exports = {
-  getRecruitmentStatus,
+  collectRecruitmentParticipants,
+  sendRecruitmentDinnerNotification,
+  sendRecruitmentMessage,
 };
