@@ -131,6 +131,8 @@ test('sends to the independent outing channel with exactly three allowed role me
   });
   assert.match(fake.sentPayloads[0].content, /^<@&grade-1-role> <@&grade-2-role> <@&grade-3-role>\n\n/);
   assert.match(fake.sentPayloads[0].content, /# :loudspeaker: 월 · 수 외출제 안내/);
+  assert.match(fake.sentPayloads[0].content, /외부 음식은 가급적 외부에서 드신 후, 쓰레기를 처리하고 복귀해주시기 바랍니다\./);
+  assert.match(fake.sentPayloads[0].content, /불가피하게 음식이나 쓰레기를 반입한 경우에는 반드시 깨끗하게 처리해주시기 바랍니다\./);
   assert.equal(automationStore.getLatestOutingNoticeMessageId(), 'new-message-1');
 });
 
