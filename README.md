@@ -48,6 +48,14 @@
 | `!외출제 on`  | 외출제 자동 발송 활성화             |
 | `!외출제 off` | 외출제 자동 발송 비활성화            |
 | `!외출제 모집`  | 모집 메시지 수동 전송 및 외출제 상태 활성화 |
+| `!외출제 공지`  | 외출제 공지 메시지 수동 전송 (관리자 전용) |
+
+### 외출제 공지 자동화
+
+* 외출제가 ON일 때 매주 월요일과 수요일 13:10 (Asia/Seoul)에 외출제 공지를 자동 전송합니다.
+* 모집/석식 서버와 다른 Discord 서버를 사용하도록 공지 Channel ID를 별도로 설정할 수 있습니다.
+* 1/2/3학년 Role ID를 기준으로 멘션하며, 마지막 자동 공지만 삭제해 최신 공지를 유지합니다.
+* ON/OFF 상태와 마지막 공지 Message ID는 JSON 파일에 저장되어 봇 재시작 후에도 유지됩니다.
 
 ## 동작 흐름
 
@@ -86,6 +94,21 @@ GOMS 내부 API 호출
 * Axios
 * Node Cron
 * Dotenv
+
+## 환경변수
+
+기존 환경변수 외에 외출제 공지 자동화에는 다음 값이 필요합니다.
+
+```text
+DISCORD_OUTING_NOTICE_CHANNEL_ID=
+DISCORD_GRADE_1_ROLE_ID=
+DISCORD_GRADE_2_ROLE_ID=
+DISCORD_GRADE_3_ROLE_ID=
+OUTING_NOTICE_CRON=10 13 * * 1,3
+OUTING_STATE_FILE=data/automation-state.json
+```
+
+`OUTING_NOTICE_CRON`을 생략하면 월요일·수요일 13:10 KST를 사용합니다. 공지 서버에서 Bot에 `View Channel`, `Send Messages`, 해당 역할 멘션 권한, `Manage Messages` 권한을 부여해야 합니다. Role hierarchy와 역할의 멘션 허용 설정도 확인해야 합니다.
 
 ## 라이선스
 

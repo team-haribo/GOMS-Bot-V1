@@ -3,6 +3,7 @@ require('dotenv').config();
 const { Client } = require('discord.js');
 const discordConfig = require('./config/discord');
 const { startRecruitmentCron } = require('./cron/recruitmentCron');
+const { startOutingNoticeCron } = require('./cron/outingNoticeCron');
 const discordService = require('./services/discordService');
 const { handleRecruitmentCommand } = require('./services/commandService');
 
@@ -13,8 +14,9 @@ const client = new Client({
 client.once('clientReady', (readyClient) => {
   try {
     startRecruitmentCron(readyClient);
+    startOutingNoticeCron(readyClient);
   } catch (error) {
-    console.error('[CRON] Failed to register recruitment cron jobs:', error);
+    console.error('[CRON] Failed to register cron jobs:', error);
   }
 });
 
