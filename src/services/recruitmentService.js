@@ -1,6 +1,9 @@
 const discordConfig = require('../config/discord');
 const { createDinnerNoticeEmbed } = require('../embeds/dinnerNoticeEmbed');
-const { createRecruitmentEmbed } = require('../embeds/recruitmentEmbed');
+const {
+  createRecruitmentEmbed,
+  RECRUITMENT_TITLE,
+} = require('../embeds/recruitmentEmbed');
 const {
   createErrorResultEmbed,
   createResultEmbed,
@@ -14,6 +17,8 @@ const {
 
 const PARTICIPATION_REACTION_EMOJI = discordConfig.reactionEmoji || '\u{1F64B}';
 const UNKNOWN_MESSAGE_ERROR_CODE = 10008;
+const HISTORY_PAGE_SIZE = 100;
+const MAX_HISTORY_MESSAGES = 500;
 
 function isParticipationReaction(reaction) {
   return (
@@ -21,6 +26,24 @@ function isParticipationReaction(reaction) {
     reaction.emoji.id === PARTICIPATION_REACTION_EMOJI ||
     reaction.emoji.toString() === PARTICIPATION_REACTION_EMOJI
   );
+}
+
+function isRecruitmentMessage(message, client) {
+  return (
+    message?.author?.id === client.user?.id &&
+    message.embeds?.some((embed) => embed.title === RECRUITMENT_TITLE) === true &&
+    message.reactions?.cache?.some(isParticipationReaction) === true
+  );
+}
+
+function findRecruitmentMessage(messages, client) {
+  for (const message of messages.values()) {
+    if (isRecruitmentMessage(message, client)) {
+      return message;
+    }
+  }
+
+  return null;
 }
 
 function createEmptyParticipantsResult() {
@@ -90,22 +113,48 @@ async function sendRecruitmentMessage(client) {
 }
 
 async function findLatestRecruitmentMessageFromHistory(client, channel) {
-  console.log('[RECRUITMENT] No current recruitment message ID in memory. Searching channel history...');
+  console.log(
+    `[RECRUITMENT] Searching recruitment channel history (up to ${MAX_HISTORY_MESSAGES} messages, ${HISTORY_PAGE_SIZE} per request)...`,
+  );
 
   try {
-    const messages = await channel.messages.fetch({ limit: 50 });
-    const message = messages.find(
-      (historyMessage) =>
-        historyMessage.author.id === client.user.id &&
-        historyMessage.reactions.cache.some(isParticipationReaction),
-    );
+    let before;
+    let searchedCount = 0;
 
-    if (message) {
-      setCurrentRecruitmentMessageId(message.id);
-      console.log(`[RECRUITMENT] Found latest recruitment message from history: ${message.id}`);
+    while (searchedCount < MAX_HISTORY_MESSAGES) {
+      const limit = Math.min(HISTORY_PAGE_SIZE, MAX_HISTORY_MESSAGES - searchedCount);
+      const fetchOptions = {
+        limit,
+        ...(before ? { before } : {}),
+      };
+      const messages = await channel.messages.fetch(fetchOptions);
+
+      if (!messages?.size) {
+        break;
+      }
+
+      const fetchedMessages = [...messages.values()];
+      searchedCount += fetchedMessages.length;
+
+      const message = findRecruitmentMessage(messages, client);
+
+      if (message) {
+        setCurrentRecruitmentMessageId(message.id);
+        console.log(`[RECRUITMENT] Found and restored latest recruitment message: ${message.id}`);
+        return message;
+      }
+
+      const lastMessage = fetchedMessages[fetchedMessages.length - 1];
+
+      if (!lastMessage?.id || fetchedMessages.length < limit || lastMessage.id === before) {
+        break;
+      }
+
+      before = lastMessage.id;
     }
 
-    return message || null;
+    console.log(`[RECRUITMENT] No recruitment message found in ${searchedCount} history messages.`);
+    return null;
   } catch (error) {
     console.error('[RECRUITMENT] Failed to fetch channel history for fallback:', error);
     return null;
@@ -213,6 +262,12 @@ async function collectRecruitmentParticipants(client) {
 
 module.exports = {
   collectRecruitmentParticipants,
+  fetchRecruitmentMessage,
+  fetchRecruitmentParticipants,
+  findLatestRecruitmentMessageFromHistory,
+  findRecruitmentMessage,
+  isParticipationReaction,
+  isRecruitmentMessage,
   sendRecruitmentDinnerNotification,
   sendRecruitmentMessage,
 };
