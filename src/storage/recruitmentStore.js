@@ -1,22 +1,15 @@
+const {
+  isAutoSendEnabled,
+  setAutoSendEnabled,
+} = require('./automationStore');
+
 const recruitmentState = {
-  autoSendEnabled: true,
   currentRecruitmentMessageId: null,
   participants: {
     ids: [],
     usernames: [],
   },
 };
-
-// TODO: Replace in-memory state with persistent storage if runtime restarts must preserve settings.
-function isAutoSendEnabled() {
-  return recruitmentState.autoSendEnabled;
-}
-
-function setAutoSendEnabled(enabled) {
-  recruitmentState.autoSendEnabled = Boolean(enabled);
-
-  return recruitmentState.autoSendEnabled;
-}
 
 function getCurrentRecruitmentMessageId() {
   return recruitmentState.currentRecruitmentMessageId;
