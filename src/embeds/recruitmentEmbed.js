@@ -14,4 +14,5 @@ function createRecruitmentEmbed() {
 
 module.exports = {
   createRecruitmentEmbed,
+  RECRUITMENT_TITLE,
 };
