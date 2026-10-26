@@ -132,8 +132,20 @@ test('sends to the independent outing channel with exactly three allowed role me
   assert.match(fake.sentPayloads[0].content, /^<@&grade-1-role> <@&grade-2-role> <@&grade-3-role>\n\n/);
   assert.match(fake.sentPayloads[0].content, /# :loudspeaker: 월 · 수 외출제 안내/);
   assert.match(fake.sentPayloads[0].content, /외부 음식은 가급적 외부에서 드신 후, 쓰레기를 처리하고 복귀해주시기 바랍니다\./);
-  assert.match(fake.sentPayloads[0].content, /불가피하게 음식이나 쓰레기를 반입한 경우에는 반드시 깨끗하게 처리해주시기 바랍니다\./);
   assert.equal(automationStore.getLatestOutingNoticeMessageId(), 'new-message-1');
+});
+
+test('includes food restriction guidance and violation handling in the notice', async () => {
+  const fake = createFakeDiscordClient();
+
+  await outingNoticeService.sendOutingNotice(fake.client);
+
+  const content = fake.sentPayloads[0].content;
+  assert.match(content, /## :hamburger: 음식물 반입 규정 안내/);
+  assert.match(content, /과자, 음료수\(카페 음료 포함\) 등은 반입 가능합니다\./);
+  assert.match(content, /햄버거, 치킨, 피자 등 외부 조리 음식은 교사의 허락 없이 반입할 수 없습니다\./);
+  assert.match(content, /편의점 간편식, 빵, 우유, 계란, 과일 등의 반입 여부는 추후 협의를 거쳐 별도로 안내할 예정입니다\./);
+  assert.match(content, /음식물 반입 규정을 위반할 경우 해당 음식물 압수, 피켓 봉사 등의 조치가 이루어질 수 있으며, 위반 정도에 따라 학생부에 전달되어 추가 지도가 진행될 수 있습니다\./);
 });
 
 test('sends the new notice before deleting the previous notice', async () => {
